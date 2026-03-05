@@ -15,3 +15,9 @@ dist/
 *.key
 *.pem
 *.pfx
+
+# Ignore local decompilation capture artifacts (keep local only)
+tests/decomp_diag.txt
+tests/decomp_main.txt
+tests/decomp_encrypt_all.txt
+tests/decomp_encrypt.txt
