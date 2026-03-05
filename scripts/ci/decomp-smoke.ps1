@@ -1,5 +1,6 @@
 param(
-    [string]$CliPath = "target/release/fission_cli.exe"
+    [string]$CliPath = "target/release/fission_cli.exe",
+    [int]$MaxOutputLines = 120
 )
 
 Set-StrictMode -Version Latest
@@ -180,7 +181,46 @@ if ($LASTEXITCODE -ne 0) {
     throw "Decompiler command failed with exit code: $LASTEXITCODE"
 }
 
-$decompText = Get-Content -Path $decompOutPath -Raw
+$decompLines = Get-Content -Path $decompOutPath
+$lineCount = $decompLines.Count
+$funcStart = -1
+$anchors = @(
+    "// Function:\s*target_function\b",
+    "^\s*[A-Za-z_][A-Za-z0-9_]*\s+target_function\s*\("
+)
+
+foreach ($anchor in $anchors) {
+    for ($i = 0; $i -lt $lineCount; $i++) {
+        if ($decompLines[$i] -match $anchor) {
+            $funcStart = $i
+            break
+        }
+    }
+    if ($funcStart -ge 0) {
+        break
+    }
+}
+
+if ($funcStart -ge 0) {
+    $previewCount = [Math]::Min($MaxOutputLines, $lineCount - $funcStart)
+    $startLine = $funcStart + 1
+    Write-Host "[decomp-smoke] Decompiled function excerpt (from line $startLine, $previewCount lines):"
+    $end = $funcStart + $previewCount - 1
+    $decompLines[$funcStart..$end] | ForEach-Object { Write-Host $_ }
+    if ($end -lt ($lineCount - 1)) {
+        Write-Host "[decomp-smoke] ... output truncated. Full output: $decompOutPath"
+    }
+} else {
+    $previewCount = [Math]::Min($lineCount, $MaxOutputLines)
+    Write-Host "[decomp-smoke] Decompiled output (first $previewCount/$lineCount lines):"
+    $decompLines | Select-Object -First $previewCount | ForEach-Object { Write-Host $_ }
+    if ($lineCount -gt $previewCount) {
+        Write-Host "[decomp-smoke] ... output truncated. Full output: $decompOutPath"
+    }
+}
+Write-Host "[decomp-smoke] Full output file: $decompOutPath"
+
+$decompText = $decompLines -join [Environment]::NewLine
 if ($decompText -notmatch "target_function|FUN_0x" -or $decompText -notmatch "return") {
     throw "Decompiler output validation failed. Expected function body markers not found."
 }

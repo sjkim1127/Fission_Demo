@@ -28,6 +28,22 @@ cargo build --release --bin fission_cli --no-default-features --features native_
 ./target/release/fission_cli.exe --decomp <address> <path-to-binary>
 ```
 
+## CLI Behavior (Demo)
+
+- `fission_cli` is a one-shot CLI only in this demo build.
+- Interactive/TUI modes are removed from the public demo scope.
+- Running `fission_cli.exe` without arguments exits after showing usage.
+- This is expected behavior (double-click launch will appear to close immediately).
+
+Use it from a terminal:
+
+```powershell
+./bin/fission_cli.exe --help
+./bin/fission_cli.exe <path-to-binary> --info
+./bin/fission_cli.exe <path-to-binary> --funcs
+./bin/fission_cli.exe <path-to-binary> --decomp 0x140001000
+```
+
 ## Policy Summary
 
 - Public repo stays lightweight: source + docs + scripts.
