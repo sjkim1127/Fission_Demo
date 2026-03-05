@@ -1,0 +1,17 @@
+# Local private source tree (never push)
+vendor/
+signatures/
+
+# Local build outputs
+target/
+ghidra_decompiler/build/
+dist/
+.release/
+
+# Sensitive local configuration/material
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx

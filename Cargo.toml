@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/fission-core",
+    "crates/fission-loader",
+    "crates/fission-disasm",
+    "crates/fission-pcode",
+    "crates/fission-signatures",
+    "crates/fission-analysis",
+    "crates/fission-ffi",
+    "crates/fission-cli",
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1

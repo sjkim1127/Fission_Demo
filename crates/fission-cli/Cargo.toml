@@ -1,0 +1,38 @@
+[package]
+name = "fission-cli"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+authors = ["Fission Dev Team"]
+description = "Fission CLI and entrypoint"
+repository = "https://github.com/sjkim1127/Fission"
+readme = "../../README.md"
+keywords = ["fission", "decompiler", "reverse-engineering", "ghidra"]
+categories = ["development-tools::debugging"]
+default-run = "fission_cli"
+
+[lib]
+name = "fission_cli"
+path = "src/lib.rs"
+test = false
+
+[features]
+default = []
+native_decomp = ["fission-analysis/native_decomp", "dep:fission-ffi"]
+
+[dependencies]
+fission-core = { path = "../fission-core" }
+fission-loader = { path = "../fission-loader" }
+fission-analysis = { path = "../fission-analysis" }
+fission-ffi = { path = "../fission-ffi", optional = true }
+tracing = "0.1"
+clap = { version = "4.5", features = ["derive"] }
+iced-x86 = { version = "1.21", features = ["std"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+libc = "0.2"
+
+[[bin]]
+name = "fission_cli"
+path = "src/bin/fission_cli.rs"
+test = false

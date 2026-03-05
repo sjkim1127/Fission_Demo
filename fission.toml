@@ -1,0 +1,42 @@
+ [logging]
+ level = "info"
+ file = ""
+ console_enabled = true
+ include_timestamp = true
+ include_thread_id = true
+ include_target = false
+
+ [decompiler]
+ num_workers = 0
+ max_workers = 8
+ default_function_size = 4096
+ max_function_size = 65536
+ min_function_size = 16
+ timeout_ms = 30000
+ enable_prefetch = true
+ prefetch_count = 3
+ sla_dir = ""
+
+ [analysis]
+ max_string_search_size = 262144
+ min_string_length = 4
+ auto_xref_analysis = true
+ decompile_cache_size = 100
+ function_address_range = 4096
+
+ [debug]
+ max_snapshots = 10000
+ max_process_ids = 4096
+
+ [ui]
+ show_performance = false
+ auto_scroll_entry = true
+ max_log_entries = 1000
+ hex_rows_per_page = 64
+
+ [paths]
+ workspace_root = ""
+ fid_dir = ""
+ gdt_dir = ""
+ die_dir = ""
+ patterns_dir = ""
