@@ -19,6 +19,33 @@ This repository is a publishable Fission demo source tree.
 - The decompiler FFI logic is not fully complete yet.
 - It has not been extensively tested against real-world binaries, diverse edge cases, or heavily obfuscated binaries.
 
+## Decompilation Quality Test (local)
+
+I performed a local decompilation test using the provided `tests/test_binary.exe` to verify the `fission_cli` one-shot decompile workflow.
+
+- Command used:
+
+  ``
+  target\release\fission_cli.exe tests\test_binary.exe --decomp 0x140001440 --output tests\decomp_encrypt.c --profile quality --verbose
+  ``
+
+- Outcome:
+  - The native decompiler initialized and ran, but the process exited with code 1 before producing a stable decompiled C file in `tests/`.
+  - Captured full console output (including native decompiler logs) to `tests/decomp_encrypt_all.txt` for debugging.
+
+- Actions taken:
+  - Fixed a CLI bug where fallback decompilation code path ignored `--output` (patched `crates/fission-cli/src/cli/oneshot/decompile.rs`).
+  - Rebuilt `fission-cli` and re-ran the test; the native decompiler still exited with code 1 during this run.
+
+- Next steps (suggested):
+  - Investigate native decompiler failure (check `ghidra_decompiler` files and FID database compatibility) or run under a debugger to capture the native stack trace.
+  - If you want, I can continue debugging the native exit or open an issue with collected logs.
+
+Files produced during testing:
+- `tests/decomp_encrypt_all.txt` — full console log capture
+- `crates/fission-cli/src/cli/oneshot/decompile.rs` — small patch to respect `--output` when writing fallback decompilation
+
+
 ## Quick Start
 
 ```powershell

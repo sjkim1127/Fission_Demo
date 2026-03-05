@@ -421,8 +421,7 @@ pub(super) fn decompile_and_output(
             if cli.ghidra_compat {
                 filtered = strip_inferred_structs(&filtered);
             }
-
-            let mut stdout = io::stdout().lock();
+            // Prepare final output string (respect --output when provided)
             if cli.json {
                 let json_output = serde_json::to_string_pretty(&serde_json::json!({
                     "address": format!("0x{:x}", addr),
@@ -435,12 +434,32 @@ pub(super) fn decompile_and_output(
                         format!("JSON serialization failed: {}", e),
                     )
                 })?;
-                writeln!(stdout, "{}", json_output)?;
-            } else {
-                if !effective_no_header {
-                    writeln!(stdout, "// Function: {} @ 0x{:x}\n", name, addr)?;
+                if let Some(ref output_path) = cli.output {
+                    fs::write(output_path, json_output.as_bytes())?;
+                    if cli.verbose {
+                        eprintln!("[✓] Output written to: {}", output_path.display());
+                    }
+                } else {
+                    let mut stdout = io::stdout().lock();
+                    writeln!(stdout, "{}", json_output)?;
                 }
-                writeln!(stdout, "{}", filtered)?;
+            } else {
+                let mut out_buf = String::new();
+                if !effective_no_header {
+                    out_buf.push_str(&format!("// Function: {} @ 0x{:x}\n\n", name, addr));
+                }
+                out_buf.push_str(&filtered);
+                out_buf.push_str("\n");
+
+                if let Some(ref output_path) = cli.output {
+                    fs::write(output_path, out_buf.as_bytes())?;
+                    if cli.verbose {
+                        eprintln!("[✓] Output written to: {}", output_path.display());
+                    }
+                } else {
+                    let mut stdout = io::stdout().lock();
+                    writeln!(stdout, "{}", out_buf)?;
+                }
             }
         }
         Err(e) => {
