@@ -6,6 +6,8 @@ Much of the code has been intentionally trimmed, and the demo is designed as a l
 - LinkedIn: https://www.linkedin.com/in/sung-joo-kim-718a93303/
 - Discord: https://discord.gg/yPYkCrwKzc
 
+- Wiki: https://github.com/sjkim1127/Fission_Demo.wiki.git
+
 This repository is a publishable Fission demo source tree.
 
 ## Project Status
