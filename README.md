@@ -1,4 +1,6 @@
 # Fission Demo (Public Repo + Split Release Assets)
+ 
+[![Wiki](https://img.shields.io/badge/Wiki-Fission%20Wiki-blue?logo=github&style=flat-square)](https://github.com/sjkim1127/Fission_Demo/wiki)
 
 This project is a demo of Fission, which is currently under development.  
 Much of the code has been intentionally trimmed, and the demo is designed as a learning/forking reference focused on the Ghidra FFI integration architecture.
