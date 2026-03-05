@@ -27,7 +27,11 @@ jobs:
 
       - name: Sync docs to wiki
         run: |
-          rsync -av --delete docs/ wiki/ || (mkdir -p wiki && cp -r docs/* wiki/)
+          if [ -d docs ]; then
+            rsync -av --delete docs/ wiki/
+          else
+            echo "No docs/ directory present; skipping wiki sync"
+          fi
 
       - name: Commit and push wiki changes
         working-directory: wiki
