@@ -1,0 +1,41 @@
+name: Sync docs to Wiki
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Clone wiki repository
+        env:
+          GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GIT_TOKEN}@github.com/${{ github.repository }}.wiki.git wiki
+
+      - name: Sync docs to wiki
+        run: |
+          rsync -av --delete docs/ wiki/ || (mkdir -p wiki && cp -r docs/* wiki/)
+
+      - name: Commit and push wiki changes
+        working-directory: wiki
+        run: |
+          git add --all
+          if git diff --cached --quiet; then
+            echo "No changes to wiki"
+          else
+            git commit -m "docs(wiki): sync docs/ -> wiki [ci skip]"
+            git push origin master
+          fi
