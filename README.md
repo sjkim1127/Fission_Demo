@@ -21,29 +21,71 @@ This repository is a publishable Fission demo source tree.
 
 ## Decompilation Quality Test (local)
 
-I performed a local decompilation test using the provided `tests/test_binary.exe` to verify the `fission_cli` one-shot decompile workflow.
+### Bug Fix: Native crash in `Varnode::temp.dataType` (uninitialized memory)
 
-- Command used:
+**Root cause discovered and fixed** during local testing.
 
-  ``
-  target\release\fission_cli.exe tests\test_binary.exe --decomp 0x140001440 --output tests\decomp_encrypt.c --profile quality --verbose
-  ``
+The native decompiler (`decomp.dll`) was crashing with exit code `0xC0000005` (access violation) during type propagation. Diagnostic logging pinpointed the exact crash:
 
-- Outcome:
-  - The native decompiler initialized and ran, but the process exited with code 1 before producing a stable decompiled C file in `tests/`.
-  - Captured full console output (including native decompiler logs) to `tests/decomp_encrypt_all.txt` for debugging.
+- `Varnode::temp` is a `mutable union { Datatype* dataType; ValueSet* valueSet; }` used as scratch storage during type propagation.
+- The `Varnode` constructor in `ghidra_decompiler/decompile/varnode.cc` **never initialized** `temp.dataType`, leaving it as `0xCDCDCDCDCDCDCDCD` (MSVC debug heap fill for uninitialized memory).
+- `TypePropagator::apply_inferred_types()` in `ghidra_decompiler/src/analysis/TypePropagator.cc` called `vn->getTempType()` on every varnode in the function, then immediately called `temp_type->getMetatype()` without checking for garbage — causing an access violation on the first unset varnode.
 
-- Actions taken:
-  - Fixed a CLI bug where fallback decompilation code path ignored `--output` (patched `crates/fission-cli/src/cli/oneshot/decompile.rs`).
-  - Rebuilt `fission-cli` and re-ran the test; the native decompiler still exited with code 1 during this run.
+**Fix applied:**
 
-- Next steps (suggested):
-  - Investigate native decompiler failure (check `ghidra_decompiler` files and FID database compatibility) or run under a debugger to capture the native stack trace.
-  - If you want, I can continue debugging the native exit or open an issue with collected logs.
+```cpp
+// ghidra_decompiler/decompile/varnode.cc — Varnode constructor
+temp.dataType = (Datatype *)0;  // Initialize temp union to avoid garbage reads in type propagation
+```
 
-Files produced during testing:
-- `tests/decomp_encrypt_all.txt` — full console log capture
-- `crates/fission-cli/src/cli/oneshot/decompile.rs` — small patch to respect `--output` when writing fallback decompilation
+With this fix, the decompiler no longer crashes and produces valid C output.
+
+---
+
+### Test: `encrypt` @ `0x140001440`
+
+**Original source** (`tests/test_binary.c`):
+
+```c
+int encrypt(char* buf, int len) {
+    for (int i = 0; i < len; i++) {
+        buf[i] ^= 0x42;
+    }
+    return 0;
+}
+```
+
+**Fission decompiled output** (actual output, exit code 0):
+
+```c
+uint64_t encrypt(longlong param_1, int param_2)
+{
+  uint32_t i;
+
+  for (i = 0; i < param_2; i++) {
+    *(byte *)(i + param_1) = *(byte *)(i + param_1) ^ 0x42;
+  }
+  return 0;
+}
+```
+
+**Quality notes:**
+- Loop structure correctly recovered (`for` loop, bounds `0 .. param_2`).
+- XOR key `0x42` is correctly identified.
+- Parameter types: `param_1 (longlong/void*)` and `param_2 (int)` — pointer type is partially identified (derefs via `*(byte *)` pattern instead of `char*`), expected given incomplete FID databases for MinGW targets.
+- Return type inferred as `uint64_t` (actual is `int`) — known limitation for MinGW-compiled binaries.
+
+---
+
+### Test: `main` @ `0x140001490`
+
+Currently crashing inside the primary Ghidra analysis action pass (`arch->allacts.getCurrent()->perform(*fd)`) with exit code `0xC0000094` (integer divide-by-zero). This is a separate issue from the TypePropagator bug, likely in one of Ghidra's internal analysis actions on the more complex `main` function (184 pcode ops vs 124 for `encrypt`). Investigation pending.
+
+---
+
+### Other changes
+
+- Fixed a CLI bug where fallback decompilation code path ignored `--output` flag (patched `crates/fission-cli/src/cli/oneshot/decompile.rs`).
 
 
 ## Quick Start

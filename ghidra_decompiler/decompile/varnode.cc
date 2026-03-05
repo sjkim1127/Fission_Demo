@@ -587,6 +587,7 @@ Varnode::Varnode(int4 s,const Address &m,Datatype *dt)
   cover = (Cover *)0;
   mergegroup = 0;
   addlflags = 0;
+  temp.dataType = (Datatype *)0;	// Initialize temp union to avoid garbage reads in type propagation
   if (m.getSpace() == (AddrSpace *)0) {
     flags = 0;
     return;
